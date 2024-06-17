@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'laravel1-app:latest'
         DOCKER_COMPOSE_VERSION = '2.27.1'
+        DOCKER_COMPOSE_FILE = 'http://localhost:8080/job/devops_11/1/execution/node/3/ws/devops3/docker-compose.yml'
     }
 
     stages {
@@ -19,7 +20,7 @@ pipeline {
                     try {
                         sh """
                             sudo docker-compose --version || curl -L "https://github.com/docker/compose/releases/download/\${DOCKER_COMPOSE_VERSION}/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
-                            sudo docker-compose up -d
+                            sudo docker-compose -f \${DOCKER_COMPOSE_FILE} up -d
                         """
                     } catch (Exception e) {
                         echo "Failed to build and deploy: ${e.message}"
@@ -33,7 +34,7 @@ pipeline {
     post {
         always {
             script {
-                sh "sudo docker-compose down"
+                sh "sudo docker-compose -f \${DOCKER_COMPOSE_FILE} down"
             }
         }
     }
