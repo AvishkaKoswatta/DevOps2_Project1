@@ -2,37 +2,31 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_IMAGE = 'laravel1-app'
-        DOCKER_COMPOSE_VERSION = '1.29.2'
+        DOCKER_IMAGE = 'laravel1-app:latest' // Tagging the Docker image
+        DOCKER_COMPOSE_VERSION = '2.27.1'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Specify the Git repository URL and branch
-                checkout([$class: 'GitSCM', branches: [[name: 'main']], userRemoteConfigs: [[url: 'https://github.com/AvishkaKoswatta/DevOps2_Project1.git']]])
-
-                // Specify the path to the docker-compose.yml file
-                // Replace 'devops2/docker-compose.yml' with the correct path in your repository
-                script {
-                    def pathToDockerCompose = 'devops2/docker-compose.yml'
-                    checkout([$class: 'GitSCM', branches: [[name: 'main']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'PathRestriction', excludedRegions: '', includedRegions: '', path: pathToDockerCompose]], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/AvishkaKoswatta/DevOps2_Project1.git']]])
-                }
+                // Checkout code from Git repository
+                git branch: 'main', url: 'https://github.com/AvishkaKoswatta/DevOps2_project1.git'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build and Deploy') {
             steps {
+                // Build and deploy using Docker Compose
                 script {
-                    docker.build DOCKER_IMAGE
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    sh "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build"
+                    try {
+                        sh """
+                            docker-compose --version || curl -L "https://github.com/docker/compose/releases/download/\${DOCKER_COMPOSE_VERSION}/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+                            docker-compose up -d
+                        """
+                    } catch (Exception e) {
+                        echo "Failed to build and deploy: ${e.message}"
+                        currentBuild.result = 'FAILURE'
+                    }
                 }
             }
         }
@@ -40,8 +34,9 @@ pipeline {
 
     post {
         always {
+            // Cleanup Docker resources
             script {
-                sh "docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps"
+                sh "docker-compose down"
             }
         }
     }
