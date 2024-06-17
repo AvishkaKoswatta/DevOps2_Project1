@@ -6,10 +6,17 @@ pipeline {
         DOCKER_COMPOSE_VERSION = '1.29.2'
     }
 
-    stages {
-        stage('Checkout') {
+    stage('Checkout') {
             steps {
-                checkout scm
+                // Specify the Git repository URL and branch
+                checkout([$class: 'GitSCM', branches: [[name: 'main']], userRemoteConfigs: [[url: 'https://github.com/AvishkaKoswatta/DevOps2_Project1.git']]])
+
+                // Specify the path to the docker-compose.yml file
+                // Replace 'devops2/docker-compose.yml' with the correct path in your repository
+                script {
+                    def pathToDockerCompose = 'devops2/docker-compose.yml'
+                    checkout([$class: 'GitSCM', branches: [[name: 'main']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'PathRestriction', excludedRegions: '', includedRegions: '', path: pathToDockerCompose]], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/AvishkaKoswatta/DevOps2_Project1.git']]])
+                }
             }
         }
 
