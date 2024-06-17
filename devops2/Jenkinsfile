@@ -21,12 +21,7 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                // You can add your test commands here
-            }
-        }
-
+        
         stage('Deploy') {
             steps {
                 script {
